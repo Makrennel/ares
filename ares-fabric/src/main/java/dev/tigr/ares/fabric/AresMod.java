@@ -79,6 +79,7 @@ public class AresMod extends Ares {
                 FastPlace.class,
                 LiquidInteract.class,
                 MultiTask.class,
+                NoBlockPush.class,
                 NoBreakDelay.class,
                 NoBreakReset.class,
                 NoSwing.class,
