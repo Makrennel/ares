@@ -36,12 +36,22 @@ public class WorldUtils implements Wrapper {
     public static boolean placeBlockMainHand(BlockPos pos) {
         return placeBlockMainHand(pos, true, false);
     }
+
+    public static boolean placeBlockMainHand(BlockPos pos, Boolean rotate) {
+        return placeBlockMainHand(pos, rotate, false);
+    }
+
     public static boolean placeBlockMainHand(BlockPos pos, Boolean rotate, Boolean ignoreEntity) {
         return placeBlock(Hand.MAIN_HAND, pos, rotate, ignoreEntity);
     }
 
     public static boolean placeBlock(Hand hand, BlockPos pos) {
         placeBlock(hand, pos, true, false);
+        return true;
+    }
+
+    public static boolean placeBlock(Hand hand, BlockPos pos, Boolean rotate) {
+        placeBlock(hand, pos, rotate, false);
         return true;
     }
 
@@ -343,11 +353,11 @@ public class WorldUtils implements Wrapper {
         return entity instanceof PlayerEntity && entity.isInvisibleTo(MC.player) && !entity.isOnGround() && !entity.collides();
     }
 
-    // must be done onTick
+    // must be done onTick - put this here because there may be other uses for fakeJump elsewhere, but it can just be put right into burrow if not.
     public static void fakeJump() {
-        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 0.40D, MC.player.getZ(), true));
-        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 0.75D, MC.player.getZ(), true));
-        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 1.00D, MC.player.getZ(), true));
-        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 1.15D, MC.player.getZ(), true));
+        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 0.40, MC.player.getZ(), true));
+        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 0.75, MC.player.getZ(), true));
+        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 1.00, MC.player.getZ(), true));
+        MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY() + 1.15, MC.player.getZ(), true));
     }
 }

@@ -71,7 +71,7 @@ public class CrystalAura extends Module {
     private final Setting<Boolean> predictMovement = register(new BooleanSetting("Predict Movement", true));
     private final Setting<Boolean> antiSurround = register(new BooleanSetting("Anti-Surround", true));
     private final Setting<Rotations> rotateMode = register(new EnumSetting<>("Rotations", Rotations.PACKET));
-    private final Setting<Canceller> cancelMode = register(new EnumSetting<>("Canceller", Canceller.NO_DESYNC));
+    private final Setting<Canceller> cancelMode = register(new EnumSetting<>("Cancel", Canceller.NO_DESYNC));
 
     enum Mode { DAMAGE, DISTANCE }
     enum Order { PLACE_BREAK, BREAK_PLACE }
@@ -264,13 +264,15 @@ public class CrystalAura extends Module {
     //Cancel Crystals if on SOUND_PACKET
     @EventHandler
     private EventListener<PacketEvent.Receive> packetReceiveListener = new EventListener<>(event -> {
-        if (event.getPacket() instanceof SPacketSoundEffect && cancelMode.getValue() == Canceller.SOUND_PACKET) {
+        if (event.getPacket() instanceof SPacketSoundEffect && cancelMode.getValue() != Canceller.NO_DESYNC) {
             final SPacketSoundEffect packet = (SPacketSoundEffect) event.getPacket();
             if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
                 for (Entity e : MC.world.loadedEntityList) {
                     if (e instanceof EntityEnderCrystal) {
-                        if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
-                            e.setDead();
+                        if (e.getDistance(packet.getX(), packet.getY(), packet.getZ()) <= 12.0f) {
+                            MC.world.removeEntityFromWorld(e.getEntityId());
+                            MC.world.removeAllEntities();
+                            MC.world.getLoadedEntityList();
                         }
                     }
                 }
@@ -313,7 +315,11 @@ public class CrystalAura extends Module {
         rotations = WorldUtils.calculateLookAt(crystal.posX + 0.5, crystal.posY + 0.5, crystal.posZ + 0.5, MC.player);
 
         //cancel crystal if ON_HIT
-        if(cancelMode.getValue() == Canceller.ON_HIT) MC.world.removeEntityFromWorld(crystal.getEntityId());
+        if(cancelMode.getValue() == Canceller.ON_HIT) {
+            MC.world.removeEntityFromWorld(crystal.getEntityId());
+            MC.world.removeAllEntities();
+            MC.world.getLoadedEntityList();
+        }
 
         // reset timer
         breakTimer = System.nanoTime() / 1000000;

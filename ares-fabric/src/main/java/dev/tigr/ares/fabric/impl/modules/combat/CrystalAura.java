@@ -65,10 +65,10 @@ public class CrystalAura extends Module {
     private final Setting<Order> order = register(new EnumSetting<>("Order", Order.PLACE_BREAK));
     private final Setting<Boolean> preventSuicide = register(new BooleanSetting("Prevent Suicide", true));
     private final Setting<Boolean> noGappleSwitch = register(new BooleanSetting("No Gapple Switch", false));
-    private final Setting<Integer> placeDelay = register(new IntegerSetting("Place Delay", 7, 0, 15));
-    private final Setting<Integer> breakDelay = register(new IntegerSetting("Break Delay", 5, 0, 15));
-    private final Setting<Integer> placeOffhandDelay = register(new IntegerSetting("Offh. Place Delay", 3, 0, 15));
-    private final Setting<Integer> breakOffhandDelay = register(new IntegerSetting("Offh. Break Delay", 3, 0, 15));
+    private final Setting<Integer> placeDelay = register(new IntegerSetting("Place Delay", 2, 0, 15));
+    private final Setting<Integer> breakDelay = register(new IntegerSetting("Break Delay", 2, 0, 15));
+    private final Setting<Integer> placeOffhandDelay = register(new IntegerSetting("Offh. Place Delay", 2, 0, 15));
+    private final Setting<Integer> breakOffhandDelay = register(new IntegerSetting("Offh. Break Delay", 2, 0, 15));
     private final Setting<Float> minDamage = register(new FloatSetting("Minimum Damage", 7.5f, 0, 15));
     private final Setting<Double> placeRange = register(new DoubleSetting("Place Range", 5, 0, 10));
     private final Setting<Double> breakRange = register(new DoubleSetting("Break Range", 5, 0, 10));
@@ -77,7 +77,7 @@ public class CrystalAura extends Module {
     private final Setting<Boolean> predictMovement = register(new BooleanSetting("Predict Movement", true));
     private final Setting<Boolean> antiSurround = register(new BooleanSetting("Anti-Surround", true));
     private final Setting<Rotations> rotateMode = register(new EnumSetting<>("Rotations", Rotations.PACKET));
-    private final Setting<Canceller> cancelMode = register(new EnumSetting<>("Canceller", Canceller.NO_DESYNC));
+    private final Setting<Canceller> cancelMode = register(new EnumSetting<>("Cancel", Canceller.NO_DESYNC));
 
     enum Mode { DAMAGE, DISTANCE }
     enum Order { PLACE_BREAK, BREAK_PLACE }
@@ -255,13 +255,15 @@ public class CrystalAura extends Module {
     //Cancel Crystals if on SOUND_PACKET
     @EventHandler
     private EventListener<PacketEvent.Receive> packetReceiveListener = new EventListener<>(event -> {
-        if (event.getPacket() instanceof PlaySoundS2CPacket && cancelMode.getValue() == Canceller.SOUND_PACKET) {
+        if (event.getPacket() instanceof PlaySoundS2CPacket && cancelMode.getValue() != Canceller.NO_DESYNC ) {
             final PlaySoundS2CPacket packet = (PlaySoundS2CPacket) event.getPacket();
             if (packet.getCategory() == SoundCategory.BLOCKS && packet.getSound() == SoundEvents.ENTITY_GENERIC_EXPLODE) {
                 for (Entity e : MC.world.getEntities()) {
                     if (e instanceof EndCrystalEntity) {
-                        if (e.squaredDistanceTo(packet.getX(), packet.getY(), packet.getZ()) <= 6.0f) {
+                        if (MathHelper.sqrt(e.squaredDistanceTo(packet.getX(), packet.getY(), packet.getZ())) <= 12.0f) {
                             MC.world.removeEntity(e.getEntityId());
+                            MC.world.finishRemovingEntities();
+                            MC.world.getEntities();
                         }
                     }
                 }
@@ -318,7 +320,10 @@ public class CrystalAura extends Module {
         rotations = WorldUtils.calculateLookAt(crystal.getX() + 0.5, crystal.getY() + 0.5, crystal.getZ() + 0.5, MC.player);
 
         //cancel crystal if ON_HIT
-        if(cancelMode.getValue() == Canceller.ON_HIT) MC.world.removeEntity(crystal.getEntityId());
+        if(cancelMode.getValue() == Canceller.ON_HIT) {
+            MC.world.removeEntity(crystal.getEntityId());
+            MC.world.getEntities();
+        }
 
         // reset timer
         breakTimer = System.nanoTime() / 1000000;

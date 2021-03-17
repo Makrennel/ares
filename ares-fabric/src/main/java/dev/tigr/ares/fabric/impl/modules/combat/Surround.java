@@ -4,9 +4,12 @@ import dev.tigr.ares.core.feature.module.Category;
 import dev.tigr.ares.core.feature.module.Module;
 import dev.tigr.ares.core.setting.Setting;
 import dev.tigr.ares.core.setting.settings.BooleanSetting;
+import dev.tigr.ares.core.setting.settings.EnumSetting;
 import dev.tigr.ares.fabric.impl.modules.player.Freecam;
 import dev.tigr.ares.fabric.utils.InventoryUtils;
+import dev.tigr.ares.fabric.utils.Timer;
 import dev.tigr.ares.fabric.utils.WorldUtils;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -18,46 +21,64 @@ import java.util.List;
 
 /**
  * @author Tigermouthbear
+ * Updated by Makrennel 3/17/21
  */
 @Module.Info(name = "Surround", description = "Surrounds your feet with obsidian", category = Category.COMBAT)
 public class Surround extends Module {
     public static Surround INSTANCE;
 
     private final Setting<Boolean> snap = register(new BooleanSetting("Center", true));
-    private final Setting<Boolean> air = register(new BooleanSetting("Air-place", false));
+    private final Setting<Boolean> rotate = register(new BooleanSetting("Rotate", true));
+    private final Setting<Boolean> air = register(new BooleanSetting("Air Place", false));
+    private final Setting<Primary> primary = register(new EnumSetting<>("Main", Primary.Obsidian));
+    private final Setting<Boolean> allBlocks = register(new BooleanSetting("All BP Blocks", true));
+
+    enum Primary {Obsidian, EnderChest, CryingObsidian, NetheriteBlock, AncientDebris, EnchantingTable, RespawnAnchor, Anvil}
+
     private BlockPos lastPos = new BlockPos(0, -100, 0);
 
     public Surround() {
         INSTANCE = this;
     }
 
+    // this is for changing the amount of time it takes to start trying to surround when using other modules that toggle it.
+    private static final Timer surroundInstanceDelay = new Timer();
+    private static int surroundDelay = 0;
+    public static void setSurroundDelay(int delay) {
+        surroundDelay = delay;
+    }
+
     // this is to allow turning off Center when toggling surround from another module without the player having to disable Center in Surround itself
-    boolean doSnap = true;
-    public static void toggleCenter(boolean doSnap) {}
+    private static boolean doSnap = true;
+    public static void toggleCenter(boolean snap) {
+        doSnap = snap;
+    }
 
     @Override
     public void onTick() {
-        if(!MC.player.isOnGround()) return;
+        if (surroundInstanceDelay.passedMillis(surroundDelay)) {
+            if (!MC.player.isOnGround()) return;
 
-        // make sure player is in the same place
-        AbstractClientPlayerEntity loc = Freecam.INSTANCE.getEnabled() ? Freecam.INSTANCE.clone : MC.player;
-        if(!loc.getBlockPos().equals(lastPos)) {
-            setEnabled(false);
-            return;
-        }
-
-        // find obby
-        int obbyIndex = findBlock();
-        if(obbyIndex == -1) return;
-        int prevSlot = MC.player.inventory.selectedSlot;
-
-        if(needsToPlace()) {
-            for(BlockPos pos: getPositions()) {
-                MC.player.inventory.selectedSlot = obbyIndex;
-                WorldUtils.placeBlockMainHand(pos);
+            // make sure player is in the same place
+            AbstractClientPlayerEntity loc = Freecam.INSTANCE.getEnabled() ? Freecam.INSTANCE.clone : MC.player;
+            if (!loc.getBlockPos().equals(lastPos)) {
+                setEnabled(false);
+                return;
             }
 
-            MC.player.inventory.selectedSlot = prevSlot;
+            // find obby
+            int blockIndex = findBlock();
+            if (blockIndex == -1) return;
+            int prevSlot = MC.player.inventory.selectedSlot;
+
+            if (needsToPlace()) {
+                for (BlockPos pos : getPositions()) {
+                    MC.player.inventory.selectedSlot = blockIndex;
+                    WorldUtils.placeBlockMainHand(pos, rotate.getValue());
+                }
+
+                MC.player.inventory.selectedSlot = prevSlot;
+            }
         }
     }
 
@@ -93,16 +114,37 @@ public class Surround extends Module {
         return Arrays.stream(pos).anyMatch(blockPos -> MC.world.getBlockState(blockPos).isAir());
     }
 
+    private Block primaryBlock(){
+        Block index = null;
+        if (primary.getValue() == Primary.Obsidian) {index = Blocks.OBSIDIAN;}
+        else if (primary.getValue() == Primary.EnderChest) {index = Blocks.ENDER_CHEST;}
+        else if (primary.getValue() == Primary.CryingObsidian) {index = Blocks.CRYING_OBSIDIAN;}
+        else if (primary.getValue() == Primary.NetheriteBlock) {index = Blocks.NETHERITE_BLOCK;}
+        else if (primary.getValue() == Primary.AncientDebris) {index = Blocks.ANCIENT_DEBRIS;}
+        else if (primary.getValue() == Primary.RespawnAnchor) {index = Blocks.RESPAWN_ANCHOR;}
+        else if (primary.getValue() == Primary.Anvil) {index = Blocks.ANVIL;}
+        return index;
+    }
+
     private int findBlock() {
-        int index = InventoryUtils.findBlockInHotbar(Blocks.OBSIDIAN);
-        return index == -1 ? InventoryUtils.findBlockInHotbar(Blocks.CRYING_OBSIDIAN) : index;
+        int index = InventoryUtils.findBlockInHotbar(primaryBlock());
+        if (index == -1 && allBlocks.getValue()) {
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.OBSIDIAN);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.CRYING_OBSIDIAN);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.NETHERITE_BLOCK);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.ANCIENT_DEBRIS);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.ENDER_CHEST);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.RESPAWN_ANCHOR);
+            if (index == -1) index = InventoryUtils.findBlockInHotbar(Blocks.ANVIL);
+        }
+        return index;
     }
 
     @Override
     public void onEnable() {
         lastPos = MC.player.getBlockPos();
 
-        if(snap.getValue() && doSnap == true) {
+        if(snap.getValue() && doSnap) {
             double xPos = MC.player.getPos().x;
             double zPos = MC.player.getPos().z;
 
@@ -117,8 +159,14 @@ public class Surround extends Module {
             }
 
             MC.player.setVelocity(0, 0, 0);
-            MC.player.setPos(xPos, lastPos.getY(), zPos);
-            MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(xPos, lastPos.getY(), zPos, MC.player.isOnGround()));
+            MC.player.updatePosition(xPos, MC.player.getY(), zPos);
+            MC.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionOnly(MC.player.getX(), MC.player.getY(), MC.player.getZ(), MC.player.isOnGround()));
         }
+    }
+
+    @Override
+    public void onDisable() {
+        doSnap = true;
+        surroundDelay = 0;
     }
 }

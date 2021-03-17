@@ -38,7 +38,7 @@ public class Burrow extends Module {
     private final Setting<CurrBlock> backupBlock = register(new EnumSetting<>("Backup", CurrBlock.EnderChest));
 
     enum Mode {Normal, NormalTimer, SemiInstant, SemiInstantTimer, Instant}
-    enum CurrBlock {Obsidian, EnderChest, CryingObsidian, NetheriteBlock, AncientDebris, EnchantingTable, Anvil}
+    enum CurrBlock {Obsidian, EnderChest, CryingObsidian, NetheriteBlock, AncientDebris, EnchantingTable, RespawnAnchor, Anvil}
 
     private BlockPos playerPos;
 
@@ -49,26 +49,28 @@ public class Burrow extends Module {
 
     //get the Block value of all three options selected
     private Block getCurrBlock(){
-        Block current = null;
-        if (blockToUse.getValue() == CurrBlock.Obsidian) {current = Blocks.OBSIDIAN;}
-        else if (blockToUse.getValue() == CurrBlock.EnderChest) {current = Blocks.ENDER_CHEST;}
-        else if (blockToUse.getValue() == CurrBlock.CryingObsidian) {current = Blocks.CRYING_OBSIDIAN;}
-        else if (blockToUse.getValue() == CurrBlock.NetheriteBlock) {current = Blocks.NETHERITE_BLOCK;}
-        else if (blockToUse.getValue() == CurrBlock.AncientDebris) {current = Blocks.ANCIENT_DEBRIS;}
-        else if (blockToUse.getValue() == CurrBlock.EnchantingTable) {current = Blocks.ENCHANTING_TABLE;}
-        else if (blockToUse.getValue() == CurrBlock.Anvil) {current = Blocks.ANVIL;}
-        return current;
+        Block index = null;
+        if (blockToUse.getValue() == CurrBlock.Obsidian) {index = Blocks.OBSIDIAN;}
+        else if (blockToUse.getValue() == CurrBlock.EnderChest) {index = Blocks.ENDER_CHEST;}
+        else if (blockToUse.getValue() == CurrBlock.CryingObsidian) {index = Blocks.CRYING_OBSIDIAN;}
+        else if (blockToUse.getValue() == CurrBlock.NetheriteBlock) {index = Blocks.NETHERITE_BLOCK;}
+        else if (blockToUse.getValue() == CurrBlock.AncientDebris) {index = Blocks.ANCIENT_DEBRIS;}
+        else if (blockToUse.getValue() == CurrBlock.RespawnAnchor) {index = Blocks.RESPAWN_ANCHOR;}
+        else if (blockToUse.getValue() == CurrBlock.EnchantingTable) {index = Blocks.ENCHANTING_TABLE;}
+        else if (blockToUse.getValue() == CurrBlock.Anvil) {index = Blocks.ANVIL;}
+        return index;
     }
     private Block getBackBlock(){
-        Block backup = null;
-        if (backupBlock.getValue() == CurrBlock.Obsidian) {backup = Blocks.OBSIDIAN;}
-        else if (backupBlock.getValue() == CurrBlock.EnderChest) {backup = Blocks.ENDER_CHEST;}
-        else if (backupBlock.getValue() == CurrBlock.CryingObsidian) {backup = Blocks.CRYING_OBSIDIAN;}
-        else if (backupBlock.getValue() == CurrBlock.NetheriteBlock) {backup = Blocks.NETHERITE_BLOCK;}
-        else if (backupBlock.getValue() == CurrBlock.AncientDebris) {backup = Blocks.ANCIENT_DEBRIS;}
-        else if (backupBlock.getValue() == CurrBlock.EnchantingTable) {backup = Blocks.ENCHANTING_TABLE;}
-        else if (backupBlock.getValue() == CurrBlock.Anvil) {backup = Blocks.ANVIL;}
-        return backup;
+        Block index = null;
+        if (backupBlock.getValue() == CurrBlock.Obsidian) {index = Blocks.OBSIDIAN;}
+        else if (backupBlock.getValue() == CurrBlock.EnderChest) {index = Blocks.ENDER_CHEST;}
+        else if (backupBlock.getValue() == CurrBlock.CryingObsidian) {index = Blocks.CRYING_OBSIDIAN;}
+        else if (backupBlock.getValue() == CurrBlock.NetheriteBlock) {index = Blocks.NETHERITE_BLOCK;}
+        else if (backupBlock.getValue() == CurrBlock.AncientDebris) {index = Blocks.ANCIENT_DEBRIS;}
+        else if (backupBlock.getValue() == CurrBlock.RespawnAnchor) {index = Blocks.RESPAWN_ANCHOR;}
+        else if (backupBlock.getValue() == CurrBlock.EnchantingTable) {index = Blocks.ENCHANTING_TABLE;}
+        else if (backupBlock.getValue() == CurrBlock.Anvil) {index = Blocks.ANVIL;}
+        return index;
     }
 
     private void switchToBlock() {
@@ -153,17 +155,17 @@ public class Burrow extends Module {
 
         if (setMode.getValue() == Mode.Instant) {
             WorldUtils.fakeJump();
-            runInstantSequence();
+            runSequence();
         }
 
         if (setMode.getValue() != Mode.Instant) {
             if (MC.player.getY() >= playerPos.getY() + height.getValue()) {
-                runInstantSequence();
+                runSequence();
             }
         }
     }
 
-    private void runInstantSequence(){
+    private void runSequence(){
         //place block where the player was before jumping
         if (MC.player.inventory.selectedSlot == -1) {
             setEnabled(false);
