@@ -34,15 +34,36 @@ import static dev.tigr.ares.Wrapper.MC;
  */
 public class WorldUtils {
     public static boolean placeBlockMainHand(BlockPos pos) {
-        return placeBlock(EnumHand.MAIN_HAND, pos);
+        return placeBlockMainHand(pos, true, false);
+    }
+
+    public static boolean placeBlockMainHand(BlockPos pos, Boolean rotate) {
+        return placeBlockMainHand(pos, rotate, false);
+    }
+
+    public static boolean placeBlockMainHand(BlockPos pos, Boolean rotate, Boolean ignoreEntity) {
+        return placeBlock(EnumHand.MAIN_HAND, pos, rotate, ignoreEntity);
     }
 
     public static boolean placeBlock(EnumHand hand, BlockPos pos) {
-        if(
-                !MC.world.getBlockState(pos).getMaterial().isReplaceable() ||
-                !MC.world.getEntitiesWithinAABBExcludingEntity(null, new AxisAlignedBB(pos))
-                .stream().noneMatch(Entity::canBeCollidedWith)
-        ) return false;
+        placeBlock(hand, pos, true, false);
+        return true;
+    }
+    public static boolean placeBlock(EnumHand hand, BlockPos pos, Boolean rotate) {
+        placeBlock(hand, pos, rotate, false);
+        return true;
+    }
+    public static boolean placeBlock(EnumHand hand, BlockPos pos, Boolean rotate, Boolean ignoreEntity) {
+        // make sure place is empty if ignoreEntity is not true
+        if(ignoreEntity) {
+            if (!MC.world.getBlockState(pos).getMaterial().isReplaceable())
+                return false;
+        } else {
+            if (!MC.world.getBlockState(pos).getMaterial().isReplaceable() ||
+                    !MC.world.getEntitiesWithinAABBExcludingEntity(null, new AxisAlignedBB(pos))
+                            .stream().noneMatch(Entity::canBeCollidedWith))
+                return false;
+        }
 
         Vec3d eyesPos = new Vec3d(MC.player.posX,
                 MC.player.posY + MC.player.getEyeHeight(),
@@ -87,8 +108,9 @@ public class WorldUtils {
                 MC.player.rotationPitch + MathHelper
                         .wrapDegrees(pitch - MC.player.rotationPitch)};
 
-        MC.player.connection.sendPacket(new CPacketPlayer.Rotation(rotations[0],
-                rotations[1], MC.player.onGround));
+        if(rotate) {
+            MC.player.connection.sendPacket(new CPacketPlayer.Rotation(rotations[0], rotations[1], MC.player.onGround));
+        }
         MC.player.connection.sendPacket(new CPacketEntityAction(MC.player, CPacketEntityAction.Action.START_SNEAKING));
         MC.playerController.processRightClickBlock(MC.player,
                 MC.world, neighbor, side2, hitVec, hand);
@@ -311,5 +333,13 @@ public class WorldUtils {
 
     public static boolean isBot(Entity entity) {
         return entity instanceof EntityPlayer && entity.isInvisibleToPlayer(MC.player) && !entity.onGround && entity.isAirBorne && !entity.canBeCollidedWith();
+    }
+
+    // must be done onTick - put this here because there may be other uses for fakeJump elsewhere, but it can just be put right into burrow if not.
+    public static void fakeJump() {
+        MC.player.connection.sendPacket(new CPacketPlayer.Position(MC.player.posX, MC.player.posY + 0.40, MC.player.posZ, true));
+        MC.player.connection.sendPacket(new CPacketPlayer.Position(MC.player.posX, MC.player.posY + 0.75, MC.player.posZ, true));
+        MC.player.connection.sendPacket(new CPacketPlayer.Position(MC.player.posX, MC.player.posY + 1.00, MC.player.posZ, true));
+        MC.player.connection.sendPacket(new CPacketPlayer.Position(MC.player.posX, MC.player.posY + 1.15, MC.player.posZ, true));
     }
 }

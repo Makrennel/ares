@@ -1,8 +1,8 @@
-package dev.tigr.ares.fabric.impl.modules.exploit;
+package dev.tigr.ares.fabric.impl.modules.movement;
 
 import dev.tigr.ares.core.feature.module.Category;
 import dev.tigr.ares.core.feature.module.Module;
-import dev.tigr.ares.fabric.event.player.BlockPushEvent;
+import dev.tigr.ares.fabric.event.movement.BlockPushEvent;
 import dev.tigr.simpleevents.listener.EventHandler;
 import dev.tigr.simpleevents.listener.EventListener;
 

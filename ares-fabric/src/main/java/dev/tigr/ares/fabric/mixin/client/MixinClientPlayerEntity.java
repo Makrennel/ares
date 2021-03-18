@@ -8,7 +8,7 @@ import dev.tigr.ares.core.util.global.ReflectionHelper;
 import dev.tigr.ares.fabric.event.movement.EntityClipEvent;
 import dev.tigr.ares.fabric.event.movement.MovePlayerEvent;
 import dev.tigr.ares.fabric.event.movement.SlowDownEvent;
-import dev.tigr.ares.fabric.event.player.BlockPushEvent;
+import dev.tigr.ares.fabric.event.movement.BlockPushEvent;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;

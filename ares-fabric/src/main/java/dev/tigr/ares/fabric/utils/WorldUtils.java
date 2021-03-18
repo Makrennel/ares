@@ -56,8 +56,10 @@ public class WorldUtils implements Wrapper {
     }
 
     public static boolean placeBlock(Hand hand, BlockPos pos, Boolean rotate, Boolean ignoreEntity) {
-        // make sure place is empty
-        if(!MC.world.getBlockState(pos).getMaterial().isReplaceable() || (!ignoreEntity && !MC.world.canPlace(Blocks.OBSIDIAN.getDefaultState(), pos, ShapeContext.absent())))
+        // make sure place is empty if ignoreEntity is not true
+        if(!MC.world.getBlockState(pos).getMaterial().isReplaceable()
+                || (!ignoreEntity
+                && !MC.world.canPlace(Blocks.OBSIDIAN.getDefaultState(), pos, ShapeContext.absent())))
             return false;
         else if (!MC.world.getBlockState(pos).getMaterial().isReplaceable())
             return false;

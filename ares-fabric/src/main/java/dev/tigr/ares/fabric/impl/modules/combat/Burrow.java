@@ -7,7 +7,7 @@ import dev.tigr.ares.core.setting.settings.*;
 import dev.tigr.ares.core.setting.settings.numerical.*;
 import dev.tigr.ares.core.util.global.ReflectionHelper;
 import dev.tigr.ares.core.util.render.TextColor;
-import dev.tigr.ares.fabric.impl.modules.exploit.NoBlockPush;
+import dev.tigr.ares.fabric.impl.modules.movement.NoBlockPush;
 import dev.tigr.ares.fabric.utils.HoleType;
 import dev.tigr.ares.fabric.utils.InventoryUtils;
 import dev.tigr.ares.fabric.utils.WorldUtils;
