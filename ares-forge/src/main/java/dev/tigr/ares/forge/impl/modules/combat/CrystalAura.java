@@ -77,7 +77,7 @@ public class CrystalAura extends Module {
     enum Order { PLACE_BREAK, BREAK_PLACE }
     enum Target { CLOSEST, MOST_DAMAGE }
     enum Rotations { PACKET, REAL, NONE }
-    enum Canceller { NO_DESYNC, ON_HIT, SOUND_PACKET }
+    enum Canceller { NO_DESYNC, ON_HIT, ON_SOUND }
 
     private long renderTimer = -1;
     private long placeTimer = -1;
@@ -88,9 +88,21 @@ public class CrystalAura extends Module {
     private final LinkedHashMap<Vec3d, Long> placedCrystals = new LinkedHashMap<>();
     private final LinkedHashMap<EntityEnderCrystal, AtomicInteger> spawnedCrystals = new LinkedHashMap<>();
     private final List<EntityEnderCrystal> lostCrystals = new ArrayList<>();
+    private EntityPlayer targetPlayer;
 
     public CrystalAura() {
         INSTANCE = this;
+    }
+
+    @Override
+    public String getInfo() {
+        if (targetPlayer != null
+                && !targetPlayer.isDead
+                && !(targetPlayer.getHealth() <= 0)
+                && !(MC.player.getDistance(targetPlayer) > Math.max(placeRange.getValue(), breakRange.getValue()) + 8)) {
+            return targetPlayer.getGameProfile().getName();
+        }
+        else return "null";
     }
 
     @Override
@@ -338,6 +350,9 @@ public class CrystalAura extends Module {
                     continue;
 
                 double score = getScore(pos, targetedPlayer);
+                if (target != null) {
+                    targetPlayer = targetedPlayer;
+                } else targetPlayer = null;
 
                 if(target == null || (score < bestScore && score != -1)) {
                     target = pos;

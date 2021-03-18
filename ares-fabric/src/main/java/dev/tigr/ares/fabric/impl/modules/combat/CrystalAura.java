@@ -94,9 +94,21 @@ public class CrystalAura extends Module {
     private final LinkedHashMap<Vec3d, Long> placedCrystals = new LinkedHashMap<>();
     private final LinkedHashMap<EndCrystalEntity, AtomicInteger> spawnedCrystals = new LinkedHashMap<>();
     private final List<EndCrystalEntity> lostCrystals = new ArrayList<>();
+    private PlayerEntity targetPlayer;
 
     public CrystalAura() {
         INSTANCE = this;
+    }
+
+    @Override
+    public String getInfo() {
+        if (targetPlayer != null
+                && !targetPlayer.isDead()
+                && !(targetPlayer.getHealth() <= 0)
+                && !(MC.player.distanceTo(targetPlayer) > Math.max(placeRange.getValue(), breakRange.getValue()) + 8)) {
+            return targetPlayer.getGameProfile().getName();
+        }
+        else return "null";
     }
 
     @Override
@@ -342,6 +354,9 @@ public class CrystalAura extends Module {
                     continue;
 
                 double score = getScore(pos, targetedPlayer);
+                if (target != null) {
+                    targetPlayer = targetedPlayer;
+                } else targetPlayer = null;
 
                 if(target == null || (score < bestScore && score != -1)) {
                     target = pos;
