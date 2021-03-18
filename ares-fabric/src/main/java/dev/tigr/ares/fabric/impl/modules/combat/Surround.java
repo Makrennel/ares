@@ -5,6 +5,7 @@ import dev.tigr.ares.core.feature.module.Module;
 import dev.tigr.ares.core.setting.Setting;
 import dev.tigr.ares.core.setting.settings.BooleanSetting;
 import dev.tigr.ares.core.setting.settings.EnumSetting;
+import dev.tigr.ares.core.setting.settings.numerical.IntegerSetting;
 import dev.tigr.ares.fabric.impl.modules.player.Freecam;
 import dev.tigr.ares.fabric.utils.InventoryUtils;
 import dev.tigr.ares.fabric.utils.Timer;
@@ -21,13 +22,13 @@ import java.util.List;
 
 /**
  * @author Tigermouthbear
- * Updated by Makrennel 3/17/21
  */
 @Module.Info(name = "Surround", description = "Surrounds your feet with obsidian", category = Category.COMBAT)
 public class Surround extends Module {
     public static Surround INSTANCE;
 
     private final Setting<Boolean> snap = register(new BooleanSetting("Center", true));
+    private final Setting<Integer> delay = register(new IntegerSetting("Delay", 0, 0, 10));
     private final Setting<Boolean> rotate = register(new BooleanSetting("Rotate", true));
     private final Setting<Boolean> air = register(new BooleanSetting("Air Place", false));
     private final Setting<Primary> primary = register(new EnumSetting<>("Main", Primary.Obsidian));
@@ -36,6 +37,7 @@ public class Surround extends Module {
     enum Primary {Obsidian, EnderChest, CryingObsidian, NetheriteBlock, AncientDebris, EnchantingTable, RespawnAnchor, Anvil}
 
     private BlockPos lastPos = new BlockPos(0, -100, 0);
+    private int ticks = 0;
 
     public Surround() {
         INSTANCE = this;
@@ -43,21 +45,21 @@ public class Surround extends Module {
 
     // this is for changing the amount of time it takes to start trying to surround when using other modules that toggle it.
     private static final Timer surroundInstanceDelay = new Timer();
-    private static int surroundDelay = 0;
-    public static void setSurroundDelay(int delay) {
-        surroundDelay = delay;
+    int timeToStart = 0;
+    public static void setSurroundWait(int timeToStart) {
+        INSTANCE.timeToStart = timeToStart;
     }
 
     // this is to allow turning off Center when toggling surround from another module without the player having to disable Center in Surround itself
-    private static boolean doSnap = true;
-    public static void toggleCenter(boolean snap) {
-        doSnap = snap;
+    boolean doSnap = true;
+    public static void toggleCenter(boolean doSnap) {
+        INSTANCE.doSnap = doSnap;
     }
 
     @Override
     public void onTick() {
-        if (surroundInstanceDelay.passedMillis(surroundDelay)) {
-            if (!MC.player.isOnGround()) return;
+        if (surroundInstanceDelay.passedMillis(timeToStart)) {
+            if (!MC.player.isOnGround() || (delay.getValue() != 0 && ticks++ % delay.getValue() != 0)) return;
 
             // make sure player is in the same place
             AbstractClientPlayerEntity loc = Freecam.INSTANCE.getEnabled() ? Freecam.INSTANCE.clone : MC.player;
@@ -66,7 +68,7 @@ public class Surround extends Module {
                 return;
             }
 
-            // find obby
+            // find block
             int blockIndex = findBlock();
             if (blockIndex == -1) return;
             int prevSlot = MC.player.inventory.selectedSlot;
@@ -166,7 +168,6 @@ public class Surround extends Module {
 
     @Override
     public void onDisable() {
-        doSnap = true;
-        surroundDelay = 0;
+        ticks = 0;
     }
 }
