@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "ares-v1_19_x-refmap.json",
   "client": [
+    "event.client.MixinClientPlayerEntity",
     "event.client.MixinKeyboard",
     "event.client.MixinMinecraftClient",
     "event.client.MixinMouse",
